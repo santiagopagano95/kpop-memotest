@@ -141,7 +141,13 @@ io.on('connection', (socket) => {
       removePlayer(roomCode, socket.id);
       socketRoomMap.delete(socket.id);
       const state = getPublicState(roomCode);
-      if (state) {
+
+      // Clean up room if all players are gone
+      const allGone = getRoom(roomCode)?.players.every(p => !p.connected);
+      if (allGone) {
+        stopTurnTimer(roomCode);
+        deleteRoom(roomCode);
+      } else if (state) {
         io.to(roomCode).emit('game-state', state);
         // If it was this player's turn, flip back any cards, advance turn, restart timer
         if (wasCurrentPlayer) {
