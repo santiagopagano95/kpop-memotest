@@ -1,9 +1,13 @@
-const { TURN_TIMER_SECONDS, CARD_FLIP_DELAY_MS } = require('./constants');
+const { TURN_TIMER_SECONDS, MAX_PLAYERS, CARD_FLIP_DELAY_MS } = require('./constants');
 
 const rooms = new Map(); // roomCode -> gameState
 
 function generateRoomCode() {
-  return String(Math.floor(1000 + Math.random() * 9000));
+  let code;
+  do {
+    code = String(Math.floor(1000 + Math.random() * 9000));
+  } while (rooms.has(code));
+  return code;
 }
 
 function shuffleArray(arr) {
@@ -53,7 +57,7 @@ function getRoom(code) {
 function addPlayer(code, socketId, name) {
   const room = rooms.get(code);
   if (!room || room.status !== 'waiting') return null;
-  if (room.players.length >= 6) return null;
+  if (room.players.length >= MAX_PLAYERS) return null;
   const player = { id: socketId, name, score: 0, connected: true };
   room.players.push(player);
   return player;
@@ -135,6 +139,10 @@ function advanceTurn(code) {
     room.currentPlayerIndex = (room.currentPlayerIndex + 1) % room.players.length;
     attempts++;
   } while (!room.players[room.currentPlayerIndex].connected && attempts < room.players.length);
+  // If all players are disconnected, pause the game
+  if (!room.players[room.currentPlayerIndex].connected) {
+    room.status = 'paused';
+  }
   room.turnTimer = TURN_TIMER_SECONDS;
 }
 
