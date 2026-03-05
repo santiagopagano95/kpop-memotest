@@ -10,8 +10,9 @@ export default function PlayerView() {
   const currentPlayer = players[currentPlayerIndex];
   const myTurn = isMyTurn();
   const myScore = players.find(p => p.id === myPlayer?.id)?.score ?? 0;
-  const myRank = [...players].sort((a, b) => b.score - a.score)
-    .findIndex(p => p.id === myPlayer?.id) + 1;
+  const rankIndex = [...players].sort((a, b) => b.score - a.score)
+    .findIndex(p => p.id === myPlayer?.id);
+  const myRank = rankIndex === -1 ? '?' : rankIndex + 1;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d1a] via-[#1a0533] to-[#0d0d1a]
