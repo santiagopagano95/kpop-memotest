@@ -9,14 +9,17 @@ export default function Victory() {
   const winner = players[0];
 
   useEffect(() => {
-    // Fire confetti for 4 seconds
+    // Fire confetti for 4 seconds, with cleanup on unmount
     const end = Date.now() + 4000;
     const colors = ['#ff6ad5', '#c774e8', '#ad8cff', '#8795e8', '#94d0ff'];
-    (function frame() {
+    let rafId;
+    function frame() {
       confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors });
       confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    })();
+      if (Date.now() < end) rafId = requestAnimationFrame(frame);
+    }
+    rafId = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(rafId);
   }, []);
 
   return (
