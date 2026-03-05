@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { getSocket, useSocket } from '../hooks/useSocket';
 import { IDOLS } from '../data/idols';
+import { playSound, startBgMusic, stopBgMusic } from '../hooks/useAudio';
 
 const GameContext = createContext(null);
 
@@ -31,13 +32,21 @@ export function GameProvider({ children }) {
         return prev;
       });
     },
-    'game-started': () => setView('playing'),
+    'game-started': () => {
+      startBgMusic();
+      setView('playing');
+    },
     'timer-tick': ({ timeLeft: t }) => setTimeLeft(t),
     'match-found': (data) => {
+      playSound('/audio/match.mp3');
       setLastMatch(data);
       setTimeout(() => setLastMatch(null), 2000);
     },
-    'game-over': () => setView('victory'),
+    'game-over': () => {
+      stopBgMusic();
+      playSound('/audio/victory.mp3');
+      setView('victory');
+    },
     'error': ({ message }) => alert(message),
   });
 
@@ -59,6 +68,7 @@ export function GameProvider({ children }) {
 
   const flipCard = useCallback((cardId) => {
     const socket = getSocket();
+    playSound('/audio/flip.mp3');
     socket.emit('flip-card', { roomCode, cardId });
   }, [roomCode]);
 
