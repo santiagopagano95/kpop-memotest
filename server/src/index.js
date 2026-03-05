@@ -133,21 +133,22 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const roomCode = socketRoomMap.get(socket.id);
     if (roomCode) {
+      // Check turn ownership BEFORE mutating player state
+      const stateBeforeRemoval = getPublicState(roomCode);
+      const wasCurrentPlayer = stateBeforeRemoval?.status === 'playing' &&
+        stateBeforeRemoval.players[stateBeforeRemoval.currentPlayerIndex]?.id === socket.id;
+
       removePlayer(roomCode, socket.id);
       socketRoomMap.delete(socket.id);
       const state = getPublicState(roomCode);
       if (state) {
         io.to(roomCode).emit('game-state', state);
-        // If it was this player's turn, advance
-        if (state.status === 'playing') {
-          const currentPlayer = state.players[state.currentPlayerIndex];
-          if (currentPlayer?.id === socket.id) {
-            stopTurnTimer(roomCode);
-            // Also flip back any exposed cards from this player's unfinished turn
-            resolveNoMatch(roomCode);
-            io.to(roomCode).emit('game-state', getPublicState(roomCode));
-            startTurnTimer(roomCode);
-          }
+        // If it was this player's turn, flip back any cards, advance turn, restart timer
+        if (wasCurrentPlayer) {
+          stopTurnTimer(roomCode);
+          resolveNoMatch(roomCode); // flips back mid-turn cards and calls advanceTurn
+          io.to(roomCode).emit('game-state', getPublicState(roomCode));
+          startTurnTimer(roomCode);
         }
       }
     }
