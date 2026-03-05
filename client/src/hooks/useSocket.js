@@ -19,12 +19,18 @@ export function useSocket(eventHandlers = {}) {
 
   useEffect(() => {
     s.connect();
-    const entries = Object.entries(handlersRef.current);
-    entries.forEach(([event, handler]) => s.on(event, handler));
+    // Register stable wrappers that always delegate to the latest handler via the ref.
+    // This avoids stale closure issues when handlers capture React state.
+    const events = Object.keys(handlersRef.current);
+    const wrappers = events.map((event) => {
+      const wrapper = (...args) => handlersRef.current[event]?.(...args);
+      s.on(event, wrapper);
+      return [event, wrapper];
+    });
     return () => {
-      entries.forEach(([event, handler]) => s.off(event, handler));
+      wrappers.forEach(([event, wrapper]) => s.off(event, wrapper));
     };
-  }, []); // eslint-disable-line
+  }, []); // stable: socket singleton never changes
 
   return s;
 }
