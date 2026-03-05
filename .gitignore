@@ -3,3 +3,10 @@ node_modules/
 .env.local
 dist/
 .DS_Store
+
+# Environment files
+client/.env.production
+client/.env.development
+
+# Audio files (user adds real MP3s manually, placeholders are empty)
+client/public/audio/*.mp3
