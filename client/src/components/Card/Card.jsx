@@ -1,20 +1,30 @@
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import './Card.css';
 
 export default function Card({ card, onClick, disabled }) {
-  const handleClick = (e) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!disabled && !card.isFlipped && !card.isMatched) {
-      onClick(card.id);
+    
+    // Prevent double-clicks/taps
+    if (isProcessing || disabled || card.isFlipped || card.isMatched) {
+      return;
     }
-  };
+    
+    setIsProcessing(true);
+    onClick(card.id);
+    
+    // Reset after a short delay to allow next interaction
+    setTimeout(() => setIsProcessing(false), 300);
+  }, [isProcessing, disabled, card.isFlipped, card.isMatched, card.id, onClick]);
 
   return (
     <div
       className="card-container aspect-square"
       onClick={handleClick}
-      onTouchStart={handleClick}
       style={{ 
         cursor: disabled || card.isFlipped || card.isMatched ? 'default' : 'pointer',
         touchAction: 'manipulation',

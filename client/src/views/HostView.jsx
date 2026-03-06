@@ -28,8 +28,10 @@ export default function HostView() {
 
       {/* Main: board + sidebar */}
       <div className="flex gap-4 flex-1 items-start">
-        <div className="flex-1 flex justify-center">
-          <Board cards={cards} onFlip={() => {}} canInteract={false} />
+        <div className="flex-1 flex justify-center items-center min-h-0">
+          <div className="w-full max-w-5xl">
+            <Board cards={cards} onFlip={() => {}} canInteract={false} />
+          </div>
         </div>
         <div className="w-48 flex flex-col gap-4">
           <Scoreboard

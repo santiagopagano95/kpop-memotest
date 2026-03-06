@@ -72,12 +72,14 @@ export default function PlayerView() {
       </div>
 
       {/* Board */}
-      <div className="flex-1 flex justify-center items-start">
-        <Board
-          cards={cards}
-          onFlip={flipCard}
-          canInteract={myTurn}
-        />
+      <div className="flex-1 flex justify-center items-center">
+        <div className="w-full max-w-4xl">
+          <Board
+            cards={cards}
+            onFlip={flipCard}
+            canInteract={myTurn}
+          />
+        </div>
       </div>
     </div>
   );
