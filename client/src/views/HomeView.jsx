@@ -6,7 +6,6 @@ export default function HomeView() {
   const [mode, setMode] = useState(null);
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const connected = connectionStatus === 'connected';
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -29,8 +28,7 @@ export default function HomeView() {
         />
       </div>
 
-      {/* Connection indicator */}
-      {!connected && (
+      {connectionStatus !== 'connected' && (
         <div className="flex items-center gap-2 text-yellow-300 text-sm animate-pulse">
           <div className="w-2 h-2 rounded-full bg-yellow-400" />
           Conectando al servidor...
@@ -41,21 +39,17 @@ export default function HomeView() {
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <button
             onClick={() => setMode('host')}
-            disabled={!connected}
             className="py-4 bg-gradient-to-r from-pink-500 to-purple-600
               rounded-2xl text-white font-black text-lg shadow-lg
-              hover:scale-105 transition-transform
-              disabled:opacity-40 disabled:hover:scale-100"
+              hover:scale-105 transition-transform"
           >
             Crear sala (Host)
           </button>
           <button
             onClick={() => setMode('join')}
-            disabled={!connected}
             className="py-4 bg-white/10 border border-purple-400/50
               rounded-2xl text-white font-bold text-lg
-              hover:scale-105 transition-transform
-              disabled:opacity-40 disabled:hover:scale-100"
+              hover:scale-105 transition-transform"
           >
             Unirme a una sala
           </button>
@@ -66,10 +60,8 @@ export default function HomeView() {
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <button
             onClick={createRoom}
-            disabled={!connected}
             className="py-4 bg-gradient-to-r from-pink-500 to-purple-600
-              rounded-2xl text-white font-black text-lg
-              disabled:opacity-40"
+              rounded-2xl text-white font-black text-lg"
           >
             Crear sala nueva
           </button>
@@ -99,7 +91,7 @@ export default function HomeView() {
           />
           <button
             onClick={() => name && roomCode && joinRoom(roomCode, name)}
-            disabled={!name || roomCode.length < 4 || !connected}
+            disabled={!name || roomCode.length < 4}
             className="py-4 bg-gradient-to-r from-pink-500 to-purple-600
               rounded-2xl text-white font-black text-lg
               disabled:opacity-40 disabled:cursor-not-allowed"
