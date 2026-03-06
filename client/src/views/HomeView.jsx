@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 
 export default function HomeView() {
-  const { createRoom, joinRoom } = useGame();
-  const [mode, setMode] = useState(null); // null | 'host' | 'join'
+  const { createRoom, joinRoom, connectionStatus } = useGame();
+  const [mode, setMode] = useState(null);
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
+  const connected = connectionStatus === 'connected';
 
-  // Task 12: Auto-fill room code from QR link (?room=XXXX)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
@@ -29,21 +29,33 @@ export default function HomeView() {
         />
       </div>
 
+      {/* Connection indicator */}
+      {!connected && (
+        <div className="flex items-center gap-2 text-yellow-300 text-sm animate-pulse">
+          <div className="w-2 h-2 rounded-full bg-yellow-400" />
+          Conectando al servidor...
+        </div>
+      )}
+
       {!mode && (
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <button
             onClick={() => setMode('host')}
+            disabled={!connected}
             className="py-4 bg-gradient-to-r from-pink-500 to-purple-600
               rounded-2xl text-white font-black text-lg shadow-lg
-              hover:scale-105 transition-transform"
+              hover:scale-105 transition-transform
+              disabled:opacity-40 disabled:hover:scale-100"
           >
             Crear sala (Host)
           </button>
           <button
             onClick={() => setMode('join')}
+            disabled={!connected}
             className="py-4 bg-white/10 border border-purple-400/50
               rounded-2xl text-white font-bold text-lg
-              hover:scale-105 transition-transform"
+              hover:scale-105 transition-transform
+              disabled:opacity-40 disabled:hover:scale-100"
           >
             Unirme a una sala
           </button>
@@ -54,8 +66,10 @@ export default function HomeView() {
         <div className="flex flex-col gap-4 w-full max-w-xs">
           <button
             onClick={createRoom}
+            disabled={!connected}
             className="py-4 bg-gradient-to-r from-pink-500 to-purple-600
-              rounded-2xl text-white font-black text-lg"
+              rounded-2xl text-white font-black text-lg
+              disabled:opacity-40"
           >
             Crear sala nueva
           </button>
@@ -85,10 +99,10 @@ export default function HomeView() {
           />
           <button
             onClick={() => name && roomCode && joinRoom(roomCode, name)}
-            disabled={!name || roomCode.length < 4}
+            disabled={!name || roomCode.length < 4 || !connected}
             className="py-4 bg-gradient-to-r from-pink-500 to-purple-600
               rounded-2xl text-white font-black text-lg
-              disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Unirme
           </button>

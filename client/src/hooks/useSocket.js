@@ -1,39 +1,27 @@
 import { useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
-const getSocketURL = () => {
-  const envUrl = import.meta.env.VITE_SOCKET_URL;
-  if (envUrl) return envUrl;
-  
-  const hostname = window.location.hostname;
-  return `http://${hostname}:3001`;
-};
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || `http://${window.location.hostname}:3001`;
 
-let socket = null;
+// Singleton socket - connects once, reconnects forever
+const socket = io(SOCKET_URL, { 
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 30000,
+});
+
+socket.on('connect', () => console.log('Connected:', socket.id));
+socket.on('connect_error', (err) => console.warn('Connection error:', err.message));
+socket.on('disconnect', (reason) => console.log('Disconnected:', reason));
 
 export function getSocket() {
-  if (!socket) {
-    const url = getSocketURL();
-    console.log('Connecting to:', url);
-    socket = io(url, { 
-      autoConnect: true,
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 10000,
-    });
-    socket.on('connect', () => console.log('Socket connected:', socket.id));
-    socket.on('connect_error', (err) => console.error('Socket error:', err.message));
-    socket.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
-    socket.on('reconnect', (attempt) => console.log('Reconnected after', attempt, 'attempts'));
-  }
   return socket;
 }
 
 export function useSocket(eventHandlers = {}) {
-  const s = getSocket();
   const handlersRef = useRef(eventHandlers);
   handlersRef.current = eventHandlers;
 
@@ -41,13 +29,13 @@ export function useSocket(eventHandlers = {}) {
     const events = Object.keys(handlersRef.current);
     const wrappers = events.map((event) => {
       const wrapper = (...args) => handlersRef.current[event]?.(...args);
-      s.on(event, wrapper);
+      socket.on(event, wrapper);
       return [event, wrapper];
     });
     return () => {
-      wrappers.forEach(([event, wrapper]) => s.off(event, wrapper));
+      wrappers.forEach(([event, wrapper]) => socket.off(event, wrapper));
     };
   }, []);
 
-  return s;
+  return socket;
 }
