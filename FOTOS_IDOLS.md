@@ -2,22 +2,27 @@
 
 Las fotos van en: `client/public/images/idols/`
 
-## Lista de archivos necesarios
+## Estado actual
 
-| Archivo       | Idol     | Grupo       |
-|---------------|----------|-------------|
-| jin.jpg       | Jin      | BTS         |
-| jungkook.jpg  | Jungkook | BTS         |
-| taehyung.jpg  | V        | BTS         |
-| jimin.jpg     | Jimin    | BTS         |
-| momo.jpg      | Momo     | TWICE       |
-| nayeon.jpg    | Nayeon   | TWICE       |
-| lisa.jpg      | Lisa     | BLACKPINK   |
-| jennie.jpg    | Jennie   | BLACKPINK   |
-| felix.jpg     | Felix    | Stray Kids  |
-| hyunjin.jpg   | Hyunjin  | Stray Kids  |
-| karina.jpg    | Karina   | aespa       |
-| winter.jpg    | Winter   | aespa       |
+✅ **9 de 12 fotos ya descargadas automaticamente**
+❌ **3 fotos faltan (deben agregarse manualmente)**
+
+## Lista de archivos
+
+| Archivo       | Idol     | Grupo       | Estado |
+|---------------|----------|-------------|--------|
+| jin.jpg       | Jin      | BTS         | ✅ Descargada |
+| jungkook.jpg  | Jungkook | BTS         | ❌ **FALTA** |
+| taehyung.jpg  | V        | BTS         | ✅ Descargada |
+| jimin.jpg     | Jimin    | BTS         | ✅ Descargada |
+| momo.jpg      | Momo     | TWICE       | ❌ **FALTA** |
+| nayeon.jpg    | Nayeon   | TWICE       | ✅ Descargada |
+| lisa.jpg      | Lisa     | BLACKPINK   | ✅ Descargada |
+| jennie.jpg    | Jennie   | BLACKPINK   | ✅ Descargada |
+| felix.jpg     | Felix    | Stray Kids  | ❌ **FALTA** |
+| hyunjin.jpg   | Hyunjin  | Stray Kids  | ✅ Descargada |
+| karina.jpg    | Karina   | aespa       | ✅ Descargada |
+| winter.jpg    | Winter   | aespa       | ✅ Descargada |
 
 ## Requisitos de las fotos
 

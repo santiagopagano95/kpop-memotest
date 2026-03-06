@@ -21,12 +21,12 @@ export default function HomeView() {
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d1a] via-[#1a0533] to-[#0d0d1a]
       flex flex-col items-center justify-center p-6 gap-8">
 
-      <div className="text-center">
-        <h1 className="text-5xl font-black text-transparent bg-clip-text
-          bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 mb-2">
-          ✨ K-Pop
-        </h1>
-        <h2 className="text-3xl font-black text-white">Memotest</h2>
+      <div className="text-center flex flex-col items-center">
+        <img 
+          src="/images/resources/Logo memotest.png?v=2" 
+          alt="K-Pop Memotest"
+          className="w-80 h-auto object-contain drop-shadow-2xl"
+        />
       </div>
 
       {!mode && (

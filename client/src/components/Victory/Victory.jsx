@@ -24,7 +24,13 @@ export default function Victory() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d1a] via-[#1a0533] to-[#0d0d1a]
-      flex flex-col items-center justify-center p-6 gap-8">
+      flex flex-col items-center justify-center p-6 gap-6">
+
+      <img 
+        src="/images/resources/Logo memotest.png?v=2" 
+        alt="K-Pop Memotest"
+        className="w-56 h-auto object-contain opacity-80"
+      />
 
       <motion.div
         initial={{ scale: 0, rotate: -180 }}

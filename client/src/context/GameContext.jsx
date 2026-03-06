@@ -53,12 +53,41 @@ export function GameProvider({ children }) {
   const createRoom = useCallback(() => {
     const socket = getSocket();
     setIsHost(true);
-    socket.emit('create-room', { idols: IDOLS });
+    
+    if (!socket.connected) {
+      console.log('Socket not connected, attempting to connect...');
+      socket.connect();
+      // Wait a moment for connection before emitting
+      setTimeout(() => {
+        if (socket.connected) {
+          socket.emit('create-room', { idols: IDOLS });
+        } else {
+          alert('Error: No se pudo conectar al servidor');
+        }
+      }, 500);
+    } else {
+      socket.emit('create-room', { idols: IDOLS });
+    }
   }, []);
 
   const joinRoom = useCallback((code, name) => {
     const socket = getSocket();
-    socket.emit('join-room', { roomCode: code.toUpperCase(), name });
+    console.log('Joining room:', code, 'Socket URL:', socket.io.opts.hostname, 'Connected:', socket.connected);
+    
+    if (!socket.connected) {
+      console.log('Socket not connected, attempting to connect...');
+      socket.connect();
+      setTimeout(() => {
+        console.log('After timeout - Connected:', socket.connected);
+        if (socket.connected) {
+          socket.emit('join-room', { roomCode: code.toUpperCase(), name });
+        } else {
+          alert('Error: No se pudo conectar al servidor. Verifica que estés en el mismo WiFi.');
+        }
+      }, 1000);
+    } else {
+      socket.emit('join-room', { roomCode: code.toUpperCase(), name });
+    }
   }, []);
 
   const startGame = useCallback(() => {

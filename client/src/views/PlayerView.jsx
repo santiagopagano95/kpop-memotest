@@ -20,7 +20,14 @@ export default function PlayerView() {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-white font-bold">{myPlayer?.name}</p>
+        <div className="flex items-center gap-2">
+          <img 
+            src="/images/resources/Logo memotest.png?v=2" 
+            alt="K-Pop Memotest"
+            className="h-12 w-auto object-contain"
+          />
+          <p className="text-white font-bold text-sm">{myPlayer?.name}</p>
+        </div>
         <div className="text-right">
           <p className="text-pink-400 font-black">{myScore} pts</p>
           <p className="text-purple-300 text-xs">#{myRank}</p>

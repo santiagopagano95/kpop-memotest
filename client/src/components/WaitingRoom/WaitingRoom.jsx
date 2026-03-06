@@ -1,28 +1,68 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useGame } from '../../context/GameContext';
+import { useLocalIP } from '../../hooks/useLocalIP';
+import { useState, useEffect } from 'react';
 
 export default function WaitingRoom() {
   const { gameState, roomCode, isHost, myPlayer, startGame } = useGame();
   const players = gameState?.players || [];
-  const joinUrl = `${window.location.origin}?room=${roomCode}`;
+  const detectedIP = useLocalIP();
+  const [manualIP, setManualIP] = useState('');
+  
+  // Use detected IP, manual IP, or fallback to localhost warning
+  const localIP = manualIP || detectedIP;
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  // Build join URL - use local IP if available, otherwise show localhost with warning
+  const joinUrl = isLocalhost && localIP 
+    ? `http://${localIP}:5173?room=${roomCode}`
+    : `${window.location.origin}?room=${roomCode}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d1a] via-[#1a0533] to-[#0d0d1a]
       flex flex-col items-center justify-center p-6 gap-8">
 
-      <h1 className="text-4xl font-black text-transparent bg-clip-text
-        bg-gradient-to-r from-pink-400 to-purple-400">
-        ✨ K-Pop Memotest ✨
-      </h1>
+      <img 
+        src="/images/resources/Logo memotest.png?v=2" 
+        alt="K-Pop Memotest"
+        className="w-72 h-auto object-contain drop-shadow-2xl"
+      />
 
       {isHost ? (
         <div className="flex flex-col items-center gap-4">
           <p className="text-purple-200 text-lg">Codigo de sala:</p>
           <div className="text-6xl font-black text-pink-400 tracking-widest">{roomCode}</div>
-          <div className="bg-white p-3 rounded-2xl">
-            <QRCodeSVG value={joinUrl} size={160} />
-          </div>
-          <p className="text-purple-300 text-sm break-all text-center">{joinUrl}</p>
+          
+          {isLocalhost && !localIP ? (
+            <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-xl p-4 max-w-sm">
+              <p className="text-yellow-200 text-sm mb-2">
+                Para escanear desde el celular, ingresa tu IP local:
+              </p>
+              <input
+                type="text"
+                placeholder="192.168.1.x"
+                value={manualIP}
+                onChange={(e) => setManualIP(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-black/30 border border-yellow-500/30 
+                  text-white placeholder-yellow-500/50 text-center"
+              />
+              <p className="text-yellow-300/60 text-xs mt-2">
+                En Windows: ipconfig | En Mac/Linux: ifconfig
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="bg-white p-3 rounded-2xl">
+                <QRCodeSVG value={joinUrl} size={160} />
+              </div>
+              <p className="text-purple-300 text-sm break-all text-center">{joinUrl}</p>
+              {isLocalhost && (
+                <p className="text-green-400 text-xs">
+                  IP detectada: {localIP}
+                </p>
+              )}
+            </>
+          )}
         </div>
       ) : (
         <p className="text-purple-200">Sala: <strong className="text-pink-400">{roomCode}</strong></p>

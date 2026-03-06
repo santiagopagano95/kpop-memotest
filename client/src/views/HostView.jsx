@@ -15,10 +15,11 @@ export default function HostView() {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-black text-transparent bg-clip-text
-          bg-gradient-to-r from-pink-400 to-purple-400">
-          ✨ K-Pop Memotest
-        </h1>
+        <img 
+          src="/images/resources/Logo memotest.png?v=2" 
+          alt="K-Pop Memotest"
+          className="h-16 w-auto object-contain"
+        />
         <div className="text-right">
           <p className="text-purple-300 text-xs">Turno de:</p>
           <p className="text-pink-400 font-black text-lg">{currentPlayer?.name || '—'}</p>

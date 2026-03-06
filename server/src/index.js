@@ -163,4 +163,20 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-httpServer.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const HOST = '0.0.0.0'; // Listen on all network interfaces
+
+httpServer.listen(PORT, HOST, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Local: http://localhost:${PORT}`);
+  
+  // Show local IP addresses
+  const os = require('os');
+  const interfaces = os.networkInterfaces();
+  Object.keys(interfaces).forEach(name => {
+    interfaces[name].forEach(addr => {
+      if (addr.family === 'IPv4' && !addr.internal) {
+        console.log(`Network: http://${addr.address}:${PORT}`);
+      }
+    });
+  });
+});
