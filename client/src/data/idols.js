@@ -40,10 +40,10 @@ const AESPA = [
 
 // LONGSHOT
 const LONGSHOT = [
-  { id: 'jiwon-ls',       name: 'Jiwon',      group: 'LONGSHOT', image: 'jiwon.jpg' },
-  { id: 'seungho-ls',     name: 'Seungho',    group: 'LONGSHOT', image: 'seungho.jpg' },
-  { id: 'minjae-ls',      name: 'Minjae',     group: 'LONGSHOT', image: 'minjae.jpg' },
-  { id: 'taehyun-ls',     name: 'Taehyun',    group: 'LONGSHOT', image: 'taehyun.jpg' },
+  { id: 'ohyul-ls',       name: 'Ohyul',      group: 'LONGSHOT', image: 'ohyul.jpg' },
+  { id: 'louis-ls',       name: 'Louis',      group: 'LONGSHOT', image: 'louis.jpg' },
+  { id: 'woojin-ls',      name: 'Woojin',     group: 'LONGSHOT', image: 'woojin.jpg' },
+  { id: 'ryul-ls',        name: 'Ryul',       group: 'LONGSHOT', image: 'ryul.jpg' },
 ];
 
 // GOT7
