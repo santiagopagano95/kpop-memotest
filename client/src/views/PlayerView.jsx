@@ -3,7 +3,7 @@ import { useGame } from '../context/GameContext';
 import Board from '../components/Board/Board';
 
 export default function PlayerView() {
-  const { gameState, myPlayer, isMyTurn, flipCard, timeLeft } = useGame();
+  const { gameState, myPlayer, isMyTurn, flipCard, timeLeft, leaveRoom } = useGame();
   if (!gameState) return null;
 
   const { cards, players, currentPlayerIndex } = gameState;
@@ -28,9 +28,19 @@ export default function PlayerView() {
           />
           <p className="text-white font-bold text-sm">{myPlayer?.name}</p>
         </div>
-        <div className="text-right">
-          <p className="text-pink-400 font-black">{myScore} pts</p>
-          <p className="text-purple-300 text-xs">#{myRank}</p>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <p className="text-pink-400 font-black">{myScore} pts</p>
+            <p className="text-purple-300 text-xs">#{myRank}</p>
+          </div>
+          <button
+            onClick={leaveRoom}
+            className="px-3 py-1.5 bg-white/10 border border-red-400/40
+              rounded-lg text-red-300 text-xs font-bold
+              hover:bg-red-500/20 transition-colors"
+          >
+            Salir
+          </button>
         </div>
       </div>
 
@@ -45,7 +55,7 @@ export default function PlayerView() {
             className="text-center py-2 bg-gradient-to-r from-pink-500/30 to-purple-500/30
               rounded-xl border border-pink-400/50"
           >
-            <p className="text-pink-400 font-black text-lg">⚡ ES TU TURNO ⚡</p>
+            <p className="text-pink-400 font-black text-lg">ES TU TURNO</p>
           </motion.div>
         ) : (
           <motion.div

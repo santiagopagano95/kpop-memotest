@@ -1,13 +1,26 @@
+import { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import Board from '../components/Board/Board';
 import Scoreboard from '../components/Scoreboard/Scoreboard';
 
 export default function HostView() {
-  const { gameState, timeLeft } = useGame();
+  const { gameState, timeLeft, endGame, leaveRoom } = useGame();
+  const [showConfirm, setShowConfirm] = useState(false);
+  
   if (!gameState) return null;
 
   const { cards, players, currentPlayerIndex } = gameState;
   const currentPlayer = players[currentPlayerIndex];
+
+  const handleEndGame = () => {
+    if (showConfirm) {
+      endGame();
+      setShowConfirm(false);
+    } else {
+      setShowConfirm(true);
+      setTimeout(() => setShowConfirm(false), 3000);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d1a] via-[#1a0533] to-[#0d0d1a]
@@ -20,9 +33,20 @@ export default function HostView() {
           alt="K-Pop Memotest"
           className="h-16 w-auto object-contain"
         />
-        <div className="text-right">
-          <p className="text-purple-300 text-xs">Turno de:</p>
-          <p className="text-pink-400 font-black text-lg">{currentPlayer?.name || '—'}</p>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-purple-300 text-xs">Turno de:</p>
+            <p className="text-pink-400 font-black text-lg">{currentPlayer?.name || '—'}</p>
+          </div>
+          <button
+            onClick={handleEndGame}
+            className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors
+              ${showConfirm 
+                ? 'bg-red-600 text-white' 
+                : 'bg-white/10 text-red-300 border border-red-400/40 hover:bg-red-500/20'}`}
+          >
+            {showConfirm ? 'Confirmar' : 'Terminar'}
+          </button>
         </div>
       </div>
 

@@ -159,6 +159,13 @@ function deleteRoom(code) {
   rooms.delete(code);
 }
 
+function endGameEarly(code) {
+  const room = rooms.get(code);
+  if (!room) return false;
+  room.status = 'finished';
+  return true;
+}
+
 module.exports = {
   createRoom,
   getRoom,
@@ -170,5 +177,6 @@ module.exports = {
   advanceTurn,
   getPublicState,
   deleteRoom,
+  endGameEarly,
   CARD_FLIP_DELAY_MS,
 };

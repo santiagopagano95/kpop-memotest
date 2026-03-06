@@ -1,21 +1,21 @@
 import { QRCodeSVG } from 'qrcode.react';
 import { useGame } from '../../context/GameContext';
 import { useLocalIP } from '../../hooks/useLocalIP';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function WaitingRoom() {
-  const { gameState, roomCode, isHost, myPlayer, startGame } = useGame();
+  const { gameState, roomCode, isHost, myPlayer, startGame, leaveRoom } = useGame();
   const players = gameState?.players || [];
   const detectedIP = useLocalIP();
   const [manualIP, setManualIP] = useState('');
   
-  // Use detected IP, manual IP, or fallback to localhost warning
   const localIP = manualIP || detectedIP;
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   
-  // Build join URL - use local IP if available, otherwise show localhost with warning
+  // Get current port from the page URL
+  const port = window.location.port || '5173';
   const joinUrl = isLocalhost && localIP 
-    ? `http://${localIP}:5173?room=${roomCode}`
+    ? `http://${localIP}:${port}?room=${roomCode}`
     : `${window.location.origin}?room=${roomCode}`;
 
   return (
@@ -56,11 +56,6 @@ export default function WaitingRoom() {
                 <QRCodeSVG value={joinUrl} size={160} />
               </div>
               <p className="text-purple-300 text-sm break-all text-center">{joinUrl}</p>
-              {isLocalhost && (
-                <p className="text-green-400 text-xs">
-                  IP detectada: {localIP}
-                </p>
-              )}
             </>
           )}
         </div>
@@ -86,16 +81,27 @@ export default function WaitingRoom() {
         </ul>
       </div>
 
-      {isHost && players.length >= 1 && (
+      <div className="flex flex-col gap-3 w-full max-w-xs">
+        {isHost && players.length >= 1 && (
+          <button
+            onClick={startGame}
+            className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600
+              rounded-full text-white font-black text-lg shadow-lg
+              hover:scale-105 transition-transform active:scale-95"
+          >
+            Iniciar Juego
+          </button>
+        )}
+
         <button
-          onClick={startGame}
-          className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600
-            rounded-full text-white font-black text-lg shadow-lg
-            hover:scale-105 transition-transform active:scale-95"
+          onClick={leaveRoom}
+          className="px-6 py-3 bg-white/10 border border-red-400/40
+            rounded-full text-red-300 font-bold text-sm
+            hover:bg-red-500/20 transition-colors"
         >
-          ¡Iniciar Juego!
+          Salir de la sala
         </button>
-      )}
+      </div>
 
       {!isHost && (
         <p className="text-purple-300 animate-pulse">
