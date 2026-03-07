@@ -163,6 +163,7 @@ io.on('connection', (socket) => {
 
     if (result.match === false) {
       stopTurnTimer(roomCode);
+      io.to(roomCode).emit('no-match');
       const timeout = setTimeout(() => {
         pendingFlipBack.delete(roomCode);
         const r = getRoom(roomCode);

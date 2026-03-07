@@ -134,4 +134,5 @@ export function playSound(src) {
   if (src.includes('flip')) playFlipSound();
   else if (src.includes('match')) playMatchSound();
   else if (src.includes('victory')) playVictorySound();
+  else if (src.includes('error')) playErrorSound();
 }

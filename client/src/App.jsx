@@ -4,6 +4,7 @@ import HostView from './views/HostView';
 import PlayerView from './views/PlayerView';
 import WaitingRoom from './components/WaitingRoom/WaitingRoom';
 import Victory from './components/Victory/Victory';
+import Countdown from './components/Countdown/Countdown';
 
 function ConnectionBanner({ status }) {
   if (status === 'connected') return null;
@@ -19,7 +20,7 @@ function ConnectionBanner({ status }) {
 }
 
 export default function App() {
-  const { view, isHost, connectionStatus } = useGame();
+  const { view, isHost, connectionStatus, countdown } = useGame();
 
   return (
     <>
@@ -28,6 +29,7 @@ export default function App() {
       {view === 'waiting' && <WaitingRoom />}
       {view === 'playing' && (isHost ? <HostView /> : <PlayerView />)}
       {view === 'victory' && <Victory />}
+      <Countdown value={countdown} />
     </>
   );
 }

@@ -1,34 +1,47 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useGame } from '../../context/GameContext';
 import './Card.css';
 
 export default function Card({ card, onClick, disabled }) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [shaking, setShaking] = useState(false);
+  const { noMatchTrigger } = useGame();
+  const wasFlipped = useRef(false);
+
+  // Shake this card if it was flipped when a no-match event fires
+  useEffect(() => {
+    if (noMatchTrigger > 0 && wasFlipped.current) {
+      setShaking(true);
+      const t = setTimeout(() => setShaking(false), 450);
+      return () => clearTimeout(t);
+    }
+  }, [noMatchTrigger]);
+
+  // Track whether this card was flipped (so we shake the right ones)
+  useEffect(() => {
+    wasFlipped.current = card.isFlipped && !card.isMatched;
+  }, [card.isFlipped, card.isMatched]);
 
   const handleClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Prevent double-clicks/taps
-    if (isProcessing || disabled || card.isFlipped || card.isMatched) {
-      return;
-    }
-    
+
+    if (isProcessing || disabled || card.isFlipped || card.isMatched) return;
+
     setIsProcessing(true);
     onClick(card.id);
-    
-    // Reset after a short delay to allow next interaction
     setTimeout(() => setIsProcessing(false), 300);
   }, [isProcessing, disabled, card.isFlipped, card.isMatched, card.id, onClick]);
 
   return (
     <div
-      className="card-container aspect-square"
+      className={`card-container aspect-square ${shaking ? 'card-shake' : ''}`}
       onClick={handleClick}
-      style={{ 
+      style={{
         cursor: disabled || card.isFlipped || card.isMatched ? 'default' : 'pointer',
         touchAction: 'manipulation',
-        WebkitTapHighlightColor: 'transparent'
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
       <div className={`card-inner ${card.isFlipped || card.isMatched ? 'flipped' : ''}`}>
@@ -47,7 +60,6 @@ export default function Card({ card, onClick, disabled }) {
             onError={(e) => { e.target.src = '/images/idols/placeholder.jpg'; }}
             draggable="false"
           />
-          {/* Nombre solo visible cuando hay match */}
           {card.isMatched && (
             <>
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1">

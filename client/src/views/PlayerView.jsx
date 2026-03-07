@@ -3,7 +3,7 @@ import { useGame } from '../context/GameContext';
 import Board from '../components/Board/Board';
 
 export default function PlayerView() {
-  const { gameState, myPlayer, isMyTurn, flipCard, timeLeft, leaveRoom } = useGame();
+  const { gameState, myPlayer, isMyTurn, flipCard, timeLeft, leaveRoom, countdown } = useGame();
   if (!gameState) return null;
 
   const { cards, players, currentPlayerIndex } = gameState;
@@ -87,7 +87,7 @@ export default function PlayerView() {
           <Board
             cards={cards}
             onFlip={flipCard}
-            canInteract={myTurn}
+            canInteract={myTurn && !countdown}
           />
         </div>
       </div>

@@ -15,6 +15,8 @@ export function GameProvider({ children }) {
   const [view, setView] = useState('home');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [boardCols, setBoardCols] = useState(4);
+  const [countdown, setCountdown] = useState(null);
+  const [noMatchTrigger, setNoMatchTrigger] = useState(0);
 
   useSocket({
     'room-created': ({ roomCode: code }) => {
@@ -28,12 +30,11 @@ export function GameProvider({ children }) {
     },
     'game-state': (state) => {
       setGameState(state);
-      // Determine columns from card count
       const totalCards = state.cards?.length || 24;
-      if (totalCards <= 12) setBoardCols(4);       // 4x3
-      else if (totalCards <= 16) setBoardCols(4);   // 4x4
-      else setBoardCols(5);                         // 5x4
-      
+      if (totalCards <= 12) setBoardCols(4);
+      else if (totalCards <= 16) setBoardCols(4);
+      else setBoardCols(5);
+
       setView(prev => {
         if (state.status === 'playing' && prev === 'waiting') return 'playing';
         if (state.status === 'finished') return 'victory';
@@ -41,16 +42,32 @@ export function GameProvider({ children }) {
       });
     },
     'game-started': () => {
-      startBgMusic();
       setView('playing');
+      setCountdown(3);
+      let n = 3;
+      const tick = setInterval(() => {
+        n -= 1;
+        if (n <= 0) {
+          clearInterval(tick);
+          setCountdown(null);
+          startBgMusic();
+        } else {
+          setCountdown(n);
+        }
+      }, 1000);
     },
     'game-restarted': () => {
       stopBgMusic();
+      setCountdown(null);
       setView('waiting');
     },
     'timer-tick': ({ timeLeft: t }) => setTimeLeft(t),
     'match-found': () => {
       playSound('match');
+    },
+    'no-match': () => {
+      playSound('error');
+      setNoMatchTrigger(n => n + 1);
     },
     'game-over': () => {
       stopBgMusic();
@@ -89,6 +106,7 @@ export function GameProvider({ children }) {
     setTimeLeft(30);
     setLastMatch(null);
     setView('home');
+    setCountdown(null);
     setBoardCols(4);
     stopBgMusic();
     window.history.replaceState({}, '', window.location.pathname);
@@ -149,7 +167,7 @@ export function GameProvider({ children }) {
   return (
     <GameContext.Provider value={{
       gameState, roomCode, myPlayer, isHost,
-      timeLeft, lastMatch, view, connectionStatus, boardCols,
+      timeLeft, lastMatch, view, connectionStatus, boardCols, countdown, noMatchTrigger,
       createRoom, joinRoom, startGame, restartGame, flipCard, isMyTurn,
       endGame, leaveRoom, resetState,
     }}>
