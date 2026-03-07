@@ -99,59 +99,33 @@ export function playErrorSound() {
   ], 'sawtooth', 0.08);
 }
 
-// Background music - simple looping pattern
-let bgMusicInterval = null;
-let bgMusicGain = null;
+// Background music - plays bg-music.mp3 on loop
+let bgAudio = null;
 
 export function startBgMusic() {
-  if (bgMusicInterval) return;
+  if (bgAudio) return;
   
   try {
-    const ctx = getAudioContext();
+    // Ensure AudioContext is resumed (autoplay policy)
+    getAudioContext();
     
-    // Play a soft ambient chord progression
-    const chords = [
-      [262, 330, 392],  // C major
-      [220, 277, 330],  // A minor  
-      [349, 440, 523],  // F major
-      [392, 494, 587],  // G major
-    ];
-    
-    let chordIndex = 0;
-    
-    function playChord() {
-      const chord = chords[chordIndex % chords.length];
-      chordIndex++;
-      
-      chord.forEach(freq => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        
-        gain.gain.setValueAtTime(0.03, ctx.currentTime);
-        gain.gain.setValueAtTime(0.03, ctx.currentTime + 1.5);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.0);
-        
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 2.0);
-      });
-    }
-    
-    playChord();
-    bgMusicInterval = setInterval(playChord, 2000);
+    bgAudio = new Audio('/audio/bg-music.mp3');
+    bgAudio.loop = true;
+    bgAudio.volume = 0.3;
+    bgAudio.play().catch(() => {
+      // Autoplay blocked - will retry on next user interaction
+      bgAudio = null;
+    });
   } catch {
-    // Ignore
+    bgAudio = null;
   }
 }
 
 export function stopBgMusic() {
-  if (bgMusicInterval) {
-    clearInterval(bgMusicInterval);
-    bgMusicInterval = null;
+  if (bgAudio) {
+    bgAudio.pause();
+    bgAudio.currentTime = 0;
+    bgAudio = null;
   }
 }
 
