@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 
-// IP fija del equipo para compartir en la red local
-const FIXED_IP = '192.168.1.15';
+// Lee la IP de la variable de entorno VITE_LOCAL_IP
+// Si no esta definida, retorna null y WaitingRoom mostrara input manual
+const ENV_IP = import.meta.env.VITE_LOCAL_IP || null;
 
 export function useLocalIP() {
   const [localIP, setLocalIP] = useState(null);
 
   useEffect(() => {
-    // Si estamos en localhost, usar la IP fija
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      setLocalIP(FIXED_IP);
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocal && ENV_IP) {
+      setLocalIP(ENV_IP);
     }
   }, []);
 
@@ -17,5 +18,5 @@ export function useLocalIP() {
 }
 
 export function getFixedIP() {
-  return FIXED_IP;
+  return ENV_IP;
 }
