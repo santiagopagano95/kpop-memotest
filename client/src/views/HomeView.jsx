@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
+import { BOARD_SIZES } from '../data/idols';
 
 export default function HomeView() {
   const { createRoom, joinRoom, connectionStatus } = useGame();
   const [mode, setMode] = useState(null);
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
+  const [selectedSize, setSelectedSize] = useState(0); // index into BOARD_SIZES
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -58,8 +60,26 @@ export default function HomeView() {
 
       {mode === 'host' && (
         <div className="flex flex-col gap-4 w-full max-w-xs">
+          <p className="text-purple-200 text-sm text-center">Cantidad de cartas:</p>
+          <div className="flex gap-2">
+            {BOARD_SIZES.map((size, i) => (
+              <button
+                key={size.pairs}
+                onClick={() => setSelectedSize(i)}
+                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-colors
+                  ${selectedSize === i
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white'
+                    : 'bg-white/10 text-purple-300 border border-purple-400/30'}`}
+              >
+                {size.pairs * 2}
+              </button>
+            ))}
+          </div>
+          <p className="text-purple-400 text-xs text-center">
+            {BOARD_SIZES[selectedSize].label}
+          </p>
           <button
-            onClick={createRoom}
+            onClick={() => createRoom(BOARD_SIZES[selectedSize].pairs)}
             className="py-4 bg-gradient-to-r from-pink-500 to-purple-600
               rounded-2xl text-white font-black text-lg"
           >

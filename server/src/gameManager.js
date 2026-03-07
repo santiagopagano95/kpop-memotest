@@ -1,6 +1,6 @@
 const { TURN_TIMER_SECONDS, MAX_PLAYERS, CARD_FLIP_DELAY_MS } = require('./constants');
 
-const rooms = new Map(); // roomCode -> gameState
+const rooms = new Map();
 
 function generateRoomCode() {
   let code;
@@ -19,8 +19,12 @@ function shuffleArray(arr) {
   return a;
 }
 
+function pickRandomIdols(allIdols, count) {
+  return shuffleArray(allIdols).slice(0, count);
+}
+
 function createCards(idols) {
-  const pairs = [...idols, ...idols]; // duplicate for pairs
+  const pairs = [...idols, ...idols];
   const shuffled = shuffleArray(pairs);
   return shuffled.map((idol, index) => ({
     id: index,
@@ -33,18 +37,21 @@ function createCards(idols) {
   }));
 }
 
-function createRoom(idols) {
+function createRoom(allIdols, pairsCount) {
   const code = generateRoomCode();
+  const selectedIdols = pickRandomIdols(allIdols, pairsCount);
   const state = {
     roomCode: code,
     players: [],
-    cards: createCards(idols),
+    cards: createCards(selectedIdols),
     currentPlayerIndex: 0,
     flippedCards: [],
-    status: 'waiting', // 'waiting' | 'playing' | 'finished'
+    status: 'waiting',
     turnTimer: TURN_TIMER_SECONDS,
     turnCount: 0,
     timerInterval: null,
+    pairsCount: pairsCount,
+    allIdols: allIdols,  // Store for restart
   };
   rooms.set(code, state);
   return state;
@@ -78,6 +85,25 @@ function startGame(code) {
   return true;
 }
 
+function restartGame(code) {
+  const room = rooms.get(code);
+  if (!room) return false;
+  
+  // Re-pick random idols and create new cards
+  const selectedIdols = pickRandomIdols(room.allIdols, room.pairsCount);
+  room.cards = createCards(selectedIdols);
+  room.currentPlayerIndex = 0;
+  room.flippedCards = [];
+  room.status = 'waiting';
+  room.turnTimer = TURN_TIMER_SECONDS;
+  room.turnCount = 0;
+  
+  // Reset scores
+  room.players.forEach(p => { p.score = 0; });
+  
+  return true;
+}
+
 function flipCard(code, socketId, cardId) {
   const room = rooms.get(code);
   if (!room || room.status !== 'playing') return { error: 'Game not active' };
@@ -98,12 +124,10 @@ function flipCard(code, socketId, cardId) {
     const card2 = room.cards[id2];
 
     if (card1.idolId === card2.idolId) {
-      // Match!
       card1.isMatched = true;
       card2.isMatched = true;
       currentPlayer.score += 1;
       room.flippedCards = [];
-      // Player gets another turn — no index change
       const allMatched = room.cards.every(c => c.isMatched);
       if (allMatched) {
         room.status = 'finished';
@@ -111,7 +135,6 @@ function flipCard(code, socketId, cardId) {
       }
       return { match: true, gameOver: false };
     } else {
-      // No match — schedule flip back
       return { match: false, gameOver: false };
     }
   }
@@ -133,13 +156,11 @@ function advanceTurn(code) {
   const room = rooms.get(code);
   if (!room) return;
   room.turnCount += 1;
-  // Find next connected player
   let attempts = 0;
   do {
     room.currentPlayerIndex = (room.currentPlayerIndex + 1) % room.players.length;
     attempts++;
   } while (!room.players[room.currentPlayerIndex].connected && attempts < room.players.length);
-  // If all players are disconnected, pause the game
   if (!room.players[room.currentPlayerIndex].connected) {
     room.status = 'paused';
   }
@@ -149,7 +170,8 @@ function advanceTurn(code) {
 function getPublicState(code) {
   const room = rooms.get(code);
   if (!room) return null;
-  const { timerInterval, ...publicState } = room; // exclude internal timer ref
+  // Exclude internal fields
+  const { timerInterval, allIdols, ...publicState } = room;
   return publicState;
 }
 
@@ -172,6 +194,7 @@ module.exports = {
   addPlayer,
   removePlayer,
   startGame,
+  restartGame,
   flipCard,
   resolveNoMatch,
   advanceTurn,

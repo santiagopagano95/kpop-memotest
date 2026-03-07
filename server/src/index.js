@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const {
   createRoom, getRoom, addPlayer, removePlayer,
-  startGame, flipCard, resolveNoMatch, advanceTurn,
+  startGame, restartGame, flipCard, resolveNoMatch, advanceTurn,
   getPublicState, deleteRoom, endGameEarly, CARD_FLIP_DELAY_MS,
 } = require('./gameManager');
 const { TURN_TIMER_SECONDS } = require('./constants');
@@ -21,15 +21,10 @@ const io = new Server(httpServer, {
   pingInterval: 10000,
 });
 
-// Store socket->room mapping for disconnect handling
 const socketRoomMap = new Map();
-// Store host socket per room
-const roomHostMap = new Map(); // roomCode -> socketId
-
-// Turn timer helpers
-const timers = new Map(); // roomCode -> intervalId
-// Track rooms with pending no-match flip-back
-const pendingFlipBack = new Map(); // roomCode -> timeoutId
+const roomHostMap = new Map();
+const timers = new Map();
+const pendingFlipBack = new Map();
 
 function startTurnTimer(roomCode) {
   stopTurnTimer(roomCode);
@@ -45,14 +40,12 @@ function startTurnTimer(roomCode) {
     if (r.turnTimer <= 0) {
       clearInterval(interval);
       timers.delete(roomCode);
-      // Clear any pending flip-back
       clearPendingFlipBack(roomCode);
       resolveNoMatch(roomCode);
       io.to(roomCode).emit('game-state', getPublicState(roomCode));
       startTurnTimer(roomCode);
     }
   }, 1000);
-
   timers.set(roomCode, interval);
 }
 
@@ -62,9 +55,6 @@ function stopTurnTimer(roomCode) {
 }
 
 function resetTurnTimer(roomCode) {
-  const room = getRoom(roomCode);
-  if (!room) return;
-  room.turnTimer = TURN_TIMER_SECONDS;
   stopTurnTimer(roomCode);
   startTurnTimer(roomCode);
 }
@@ -84,9 +74,9 @@ function cleanupRoom(roomCode) {
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  // HOST: create a new room
-  socket.on('create-room', ({ idols }) => {
-    const state = createRoom(idols);
+  socket.on('create-room', ({ idols, pairsCount }) => {
+    const pairs = pairsCount || 6;
+    const state = createRoom(idols, pairs);
     socket.join(state.roomCode);
     socketRoomMap.set(socket.id, state.roomCode);
     roomHostMap.set(state.roomCode, socket.id);
@@ -94,7 +84,6 @@ io.on('connection', (socket) => {
     socket.emit('game-state', getPublicState(state.roomCode));
   });
 
-  // PLAYER: join existing room
   socket.on('join-room', ({ roomCode, name }) => {
     const room = getRoom(roomCode);
     if (!room) return socket.emit('error', { message: 'Sala no encontrada. Puede que haya expirado.' });
@@ -109,7 +98,6 @@ io.on('connection', (socket) => {
     io.to(roomCode).emit('game-state', getPublicState(roomCode));
   });
 
-  // HOST: start the game
   socket.on('start-game', ({ roomCode }) => {
     const ok = startGame(roomCode);
     if (!ok) return socket.emit('error', { message: 'No se puede iniciar el juego' });
@@ -119,11 +107,19 @@ io.on('connection', (socket) => {
     startTurnTimer(roomCode);
   });
 
-  // HOST or PLAYER: end game early
+  socket.on('restart-game', ({ roomCode }) => {
+    const ok = restartGame(roomCode);
+    if (!ok) return socket.emit('error', { message: 'No se puede reiniciar' });
+
+    stopTurnTimer(roomCode);
+    clearPendingFlipBack(roomCode);
+    io.to(roomCode).emit('game-restarted');
+    io.to(roomCode).emit('game-state', getPublicState(roomCode));
+  });
+
   socket.on('end-game', ({ roomCode }) => {
     const room = getRoom(roomCode);
     if (!room) return;
-    
     const ok = endGameEarly(roomCode);
     if (ok) {
       stopTurnTimer(roomCode);
@@ -132,42 +128,28 @@ io.on('connection', (socket) => {
     }
   });
 
-  // HOST or PLAYER: leave room and go back to menu
   socket.on('leave-room', ({ roomCode }) => {
     socket.leave(roomCode);
     socketRoomMap.delete(socket.id);
-    
     const isRoomHost = roomHostMap.get(roomCode) === socket.id;
-    
     if (isRoomHost) {
-      // Host left: end the game and clean up
-      stopTurnTimer(roomCode);
-      clearPendingFlipBack(roomCode);
       io.to(roomCode).emit('room-closed', { message: 'El host cerró la sala' });
       cleanupRoom(roomCode);
     } else {
-      // Player left
       removePlayer(roomCode, socket.id);
       const state = getPublicState(roomCode);
-      if (state) {
-        io.to(roomCode).emit('game-state', state);
-      }
+      if (state) io.to(roomCode).emit('game-state', state);
     }
   });
 
-  // PLAYER: flip a card
   socket.on('flip-card', ({ roomCode, cardId }) => {
     const room = getRoom(roomCode);
-    if (!room) return socket.emit('error', { message: 'Sala no encontrada' });
-    
-    // Ignore flips while a no-match is being resolved
+    if (!room) return;
     if (pendingFlipBack.has(roomCode)) return;
-    
+
     const result = flipCard(roomCode, socket.id, cardId);
     if (result.error) {
-      // Don't alert for non-critical errors like "Not your turn" or "Invalid card"
-      // These happen naturally from race conditions and double-clicks
-      console.log(`flip-card warning: ${result.error} (player: ${socket.id})`);
+      console.log(`flip-card: ${result.error} (${socket.id})`);
       return;
     }
 
@@ -180,7 +162,6 @@ io.on('connection', (socket) => {
     }
 
     if (result.match === false) {
-      // Show the non-match for a moment, then flip back and advance turn
       stopTurnTimer(roomCode);
       const timeout = setTimeout(() => {
         pendingFlipBack.delete(roomCode);
@@ -206,28 +187,22 @@ io.on('connection', (socket) => {
     const roomCode = socketRoomMap.get(socket.id);
     if (roomCode) {
       const isRoomHost = roomHostMap.get(roomCode) === socket.id;
-      
-      // Check turn ownership BEFORE mutating player state
       const stateBeforeRemoval = getPublicState(roomCode);
       const wasCurrentPlayer = stateBeforeRemoval?.status === 'playing' &&
         stateBeforeRemoval.players[stateBeforeRemoval.currentPlayerIndex]?.id === socket.id;
 
       removePlayer(roomCode, socket.id);
       socketRoomMap.delete(socket.id);
-      const state = getPublicState(roomCode);
 
-      // Clean up room if all players are gone
       const room = getRoom(roomCode);
       const allGone = room?.players.every(p => !p.connected);
       if (allGone || isRoomHost) {
-        // If host disconnected, close everything
         if (isRoomHost && !allGone) {
           io.to(roomCode).emit('room-closed', { message: 'El host se desconectó' });
         }
         cleanupRoom(roomCode);
-      } else if (state) {
-        io.to(roomCode).emit('game-state', state);
-        // If it was this player's turn, flip back any cards, advance turn, restart timer
+      } else {
+        io.to(roomCode).emit('game-state', getPublicState(roomCode));
         if (wasCurrentPlayer) {
           stopTurnTimer(roomCode);
           clearPendingFlipBack(roomCode);
@@ -242,12 +217,8 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-const HOST = '0.0.0.0';
-
-httpServer.listen(PORT, HOST, () => {
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Local: http://localhost:${PORT}`);
-  
   const os = require('os');
   const interfaces = os.networkInterfaces();
   Object.keys(interfaces).forEach(name => {

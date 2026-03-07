@@ -18,6 +18,9 @@ export default function WaitingRoom() {
     ? `http://${localIP}:${port}?room=${roomCode}`
     : `${window.location.origin}?room=${roomCode}`;
 
+  // Detect if this is a restart (players already have scores from a previous round)
+  const isRestart = players.some(p => p.score > 0) || players.length > 1;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d1a] via-[#1a0533] to-[#0d0d1a]
       flex flex-col items-center justify-center p-6 gap-8">
@@ -27,6 +30,14 @@ export default function WaitingRoom() {
         alt="K-Pop Memotest"
         className="w-72 h-auto object-contain drop-shadow-2xl"
       />
+
+      {isRestart && (
+        <div className="bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-6 py-3">
+          <p className="text-cyan-300 font-bold text-center">
+            Nueva ronda! Los puntajes se reiniciaron
+          </p>
+        </div>
+      )}
 
       {isHost ? (
         <div className="flex flex-col items-center gap-4">
@@ -89,7 +100,7 @@ export default function WaitingRoom() {
               rounded-full text-white font-black text-lg shadow-lg
               hover:scale-105 transition-transform active:scale-95"
           >
-            Iniciar Juego
+            {isRestart ? 'Iniciar nueva ronda' : 'Iniciar Juego'}
           </button>
         )}
 

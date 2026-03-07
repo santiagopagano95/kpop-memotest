@@ -4,9 +4,11 @@ import confetti from 'canvas-confetti';
 import { useGame } from '../../context/GameContext';
 
 export default function Victory() {
-  const { gameState, resetState } = useGame();
+  const { gameState, resetState, restartGame, isHost } = useGame();
   const players = [...(gameState?.players || [])].sort((a, b) => b.score - a.score);
-  const winner = players[0];
+  const topScore = players[0]?.score ?? 0;
+  const winners = players.filter(p => p.score === topScore);
+  const isTie = winners.length > 1;
 
   useEffect(() => {
     const end = Date.now() + 4000;
@@ -20,6 +22,17 @@ export default function Victory() {
     rafId = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(rafId);
   }, []);
+
+  // Build the headline text
+  let headline;
+  if (players.length === 0) {
+    headline = 'Juego terminado!';
+  } else if (isTie) {
+    const names = winners.map(w => w.name).join(' y ');
+    headline = `Empate! ${names}`;
+  } else {
+    headline = `${winners[0].name} gano!`;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0d0d1a] via-[#1a0533] to-[#0d0d1a]
@@ -37,7 +50,7 @@ export default function Victory() {
         transition={{ type: 'spring', duration: 0.8 }}
         className="text-8xl"
       >
-        👑
+        {isTie ? '🤝' : '👑'}
       </motion.div>
 
       <motion.h1
@@ -47,7 +60,7 @@ export default function Victory() {
         className="text-3xl font-black text-center text-transparent bg-clip-text
           bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-400"
       >
-        {winner ? `${winner.name} gano!` : 'Juego terminado!'}
+        {headline}
       </motion.h1>
 
       <motion.div
@@ -58,29 +71,60 @@ export default function Victory() {
       >
         <h2 className="text-white font-bold mb-4 text-center">Ranking Final</h2>
         <ul className="space-y-3">
-          {players.map((p, i) => (
-            <li key={p.id}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3
-                ${i === 0 ? 'bg-yellow-400/20 border border-yellow-400/50' : 'bg-white/5'}`}>
-              <span className="text-xl">{['👑','🥈','🥉'][i] || `${i+1}.`}</span>
-              <span className="flex-1 text-white font-semibold">{p.name}</span>
-              <span className="text-pink-300 font-bold">{p.score} pts</span>
-            </li>
-          ))}
+          {players.map((p, i) => {
+            const isWinner = p.score === topScore;
+            return (
+              <li key={p.id}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3
+                  ${isWinner ? 'bg-yellow-400/20 border border-yellow-400/50' : 'bg-white/5'}`}>
+                <span className="text-xl">
+                  {isTie && isWinner ? '🤝' : ['👑','🥈','🥉'][i] || `${i+1}.`}
+                </span>
+                <span className="flex-1 text-white font-semibold">{p.name}</span>
+                <span className="text-pink-300 font-bold">{p.score} pts</span>
+              </li>
+            );
+          })}
         </ul>
       </motion.div>
 
-      <motion.button
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2 }}
-        onClick={resetState}
-        className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600
-          rounded-full text-white font-black text-lg shadow-lg
-          hover:scale-105 transition-transform active:scale-95"
+        className="flex flex-col gap-3 w-full max-w-xs"
       >
-        Volver al inicio
-      </motion.button>
+        {isHost && (
+          <button
+            onClick={restartGame}
+            className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600
+              rounded-full text-white font-black text-lg shadow-lg
+              hover:scale-105 transition-transform active:scale-95"
+          >
+            Jugar de nuevo
+          </button>
+        )}
+
+        <button
+          onClick={resetState}
+          className="px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-600
+            rounded-full text-white font-black text-lg shadow-lg
+            hover:scale-105 transition-transform active:scale-95"
+        >
+          Volver al inicio
+        </button>
+      </motion.div>
+
+      {!isHost && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          className="text-purple-300 text-sm"
+        >
+          El host puede reiniciar la partida
+        </motion.p>
+      )}
     </div>
   );
 }

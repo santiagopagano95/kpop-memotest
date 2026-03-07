@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { getSocket, useSocket } from '../hooks/useSocket';
-import { IDOLS } from '../data/idols';
+import { ALL_IDOLS } from '../data/idols';
 import { playSound, startBgMusic, stopBgMusic } from '../hooks/useAudio';
 
 const GameContext = createContext(null);
@@ -14,6 +14,7 @@ export function GameProvider({ children }) {
   const [lastMatch, setLastMatch] = useState(null);
   const [view, setView] = useState('home');
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [boardCols, setBoardCols] = useState(4);
 
   useSocket({
     'room-created': ({ roomCode: code }) => {
@@ -27,6 +28,12 @@ export function GameProvider({ children }) {
     },
     'game-state': (state) => {
       setGameState(state);
+      // Determine columns from card count
+      const totalCards = state.cards?.length || 24;
+      if (totalCards <= 12) setBoardCols(4);       // 4x3
+      else if (totalCards <= 16) setBoardCols(4);   // 4x4
+      else setBoardCols(5);                         // 5x4
+      
       setView(prev => {
         if (state.status === 'playing' && prev === 'waiting') return 'playing';
         if (state.status === 'finished') return 'victory';
@@ -36,6 +43,10 @@ export function GameProvider({ children }) {
     'game-started': () => {
       startBgMusic();
       setView('playing');
+    },
+    'game-restarted': () => {
+      stopBgMusic();
+      setView('waiting');
     },
     'timer-tick': ({ timeLeft: t }) => setTimeLeft(t),
     'match-found': () => {
@@ -56,18 +67,14 @@ export function GameProvider({ children }) {
     },
   });
 
-  // Track connection status
   useEffect(() => {
     const socket = getSocket();
     const onConnect = () => setConnectionStatus('connected');
     const onDisconnect = () => setConnectionStatus('disconnected');
-    
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.io.on('reconnect_attempt', () => setConnectionStatus('connecting'));
-    
     if (socket.connected) setConnectionStatus('connected');
-    
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
@@ -82,15 +89,16 @@ export function GameProvider({ children }) {
     setTimeLeft(30);
     setLastMatch(null);
     setView('home');
+    setBoardCols(4);
     stopBgMusic();
     window.history.replaceState({}, '', window.location.pathname);
   }, []);
 
-  const createRoom = useCallback(() => {
+  const createRoom = useCallback((pairsCount = 6) => {
     const socket = getSocket();
     if (!socket.connected) return;
     setIsHost(true);
-    socket.emit('create-room', { idols: IDOLS });
+    socket.emit('create-room', { idols: ALL_IDOLS, pairsCount });
   }, []);
 
   const joinRoom = useCallback((code, name) => {
@@ -103,6 +111,12 @@ export function GameProvider({ children }) {
     const socket = getSocket();
     if (!socket.connected) return;
     socket.emit('start-game', { roomCode });
+  }, [roomCode]);
+
+  const restartGame = useCallback(() => {
+    const socket = getSocket();
+    if (!socket.connected || !roomCode) return;
+    socket.emit('restart-game', { roomCode });
   }, [roomCode]);
 
   const flipCard = useCallback((cardId) => {
@@ -135,8 +149,8 @@ export function GameProvider({ children }) {
   return (
     <GameContext.Provider value={{
       gameState, roomCode, myPlayer, isHost,
-      timeLeft, lastMatch, view, connectionStatus,
-      createRoom, joinRoom, startGame, flipCard, isMyTurn,
+      timeLeft, lastMatch, view, connectionStatus, boardCols,
+      createRoom, joinRoom, startGame, restartGame, flipCard, isMyTurn,
       endGame, leaveRoom, resetState,
     }}>
       {children}

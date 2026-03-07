@@ -4,12 +4,13 @@ import Board from '../components/Board/Board';
 import Scoreboard from '../components/Scoreboard/Scoreboard';
 
 export default function HostView() {
-  const { gameState, timeLeft, endGame, leaveRoom } = useGame();
+  const { gameState, timeLeft, endGame, leaveRoom, boardCols } = useGame();
   const [showConfirm, setShowConfirm] = useState(false);
   
   if (!gameState) return null;
 
   const { cards, players, currentPlayerIndex } = gameState;
+  const boardMaxW = boardCols === 5 ? 'max-w-6xl' : 'max-w-5xl';
   const currentPlayer = players[currentPlayerIndex];
 
   const handleEndGame = () => {
@@ -53,7 +54,7 @@ export default function HostView() {
       {/* Main: board + sidebar */}
       <div className="flex gap-4 flex-1 items-start">
         <div className="flex-1 flex justify-center items-center min-h-0">
-          <div className="w-full max-w-5xl">
+          <div className={`w-full ${boardMaxW}`}>
             <Board cards={cards} onFlip={() => {}} canInteract={false} />
           </div>
         </div>
