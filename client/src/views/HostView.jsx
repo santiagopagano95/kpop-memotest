@@ -10,7 +10,7 @@ export default function HostView() {
   if (!gameState) return null;
 
   const { cards, players, currentPlayerIndex } = gameState;
-  const boardMaxW = boardCols === 5 ? 'max-w-6xl' : 'max-w-5xl';
+  const boardMaxW = boardCols === 6 ? 'max-w-7xl' : boardCols === 5 ? 'max-w-6xl' : 'max-w-5xl';
   const currentPlayer = players[currentPlayerIndex];
 
   const handleEndGame = () => {

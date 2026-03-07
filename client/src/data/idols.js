@@ -53,7 +53,8 @@ export const ALL_IDOLS = [
 
 // Board size options: pairs count -> total cards
 export const BOARD_SIZES = [
-  { pairs: 6, label: '12 cartas (4x3)', cols: 4 },
-  { pairs: 8, label: '16 cartas (4x4)', cols: 4 },
+  { pairs: 6,  label: '12 cartas (4x3)', cols: 4 },
+  { pairs: 8,  label: '16 cartas (4x4)', cols: 4 },
   { pairs: 10, label: '20 cartas (5x4)', cols: 5 },
+  { pairs: 15, label: '30 cartas (6x5)', cols: 6 },
 ];

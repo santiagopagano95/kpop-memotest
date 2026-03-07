@@ -31,9 +31,9 @@ export function GameProvider({ children }) {
     'game-state': (state) => {
       setGameState(state);
       const totalCards = state.cards?.length || 24;
-      if (totalCards <= 12) setBoardCols(4);
-      else if (totalCards <= 16) setBoardCols(4);
-      else setBoardCols(5);
+      if (totalCards <= 16) setBoardCols(4);
+      else if (totalCards <= 20) setBoardCols(5);
+      else setBoardCols(6);
 
       setView(prev => {
         if (state.status === 'playing' && prev === 'waiting') return 'playing';
